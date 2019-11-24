@@ -11,7 +11,7 @@ public class EmBDdedMessage {
 	
 	public static final char MESSAGE_CLIENT_PUB_NEW_ESTADO = (char) 6;
 	
-	public static final char MESSAGE_CONNECTION_CLOSE = (char) -1;
+	public static final char MESSAGE_CONNECTION_CLOSE = (char) 255;
 	
 	public static final char MESSAGE_ENDL = (char) 13;
 	

@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
-import remote.EmBDdedSocket;
+import remote.EmBDdedClientKeeper;
 
 public class EmBDdedClient {
 	private Socket socket;
-	private EmBDdedSocket thread;
+	private EmBDdedClientKeeper thread;
 	public String clientName;
 	
-	public EmBDdedClient(Socket socket, EmBDdedSocket runnable) {
+	public EmBDdedClient(Socket socket, EmBDdedClientKeeper runnable) {
 		this.socket = socket;
 		this.thread = runnable;
 	}
@@ -26,8 +26,8 @@ public class EmBDdedClient {
 			System.out.println("Logado como: "+msg.dataStr1);
 			this.clientName = msg.dataStr1;
 			
-			this.thread.sendMessage("OLAAAAAAAAAA");
-			this.thread.release();
+			this.thread.sendMessage("OLAAAAAAAAAA " + this.clientName);
+			//this.thread.release();
 			
 			break;
 		case EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ESTADO:

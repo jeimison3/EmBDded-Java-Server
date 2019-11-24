@@ -19,7 +19,7 @@ import EmBDded.EmBDdedMessage;
 
 // Classe individual de cada conexão socket
 
-public class EmBDdedSocket implements Runnable {
+public class EmBDdedClientKeeper implements Runnable {
 	private String DedicatedHostIP;
 	private EmBDdedClient cliente;
 	public Socket conexao;
@@ -28,20 +28,20 @@ public class EmBDdedSocket implements Runnable {
 	public BufferedReader entrada;
 	private String bytesResto = "";
 	
-	public EmBDdedSocket(Socket connection, Connection db) throws IOException {
-		System.out.println("Nova conexão!");
+	public EmBDdedClientKeeper(Socket connection, Connection db) throws IOException {
 		this.db = db;
 		this.cliente = new EmBDdedClient(connection, this);
 		this.conectaSocket(connection);
 	}
 	
 	public boolean itsMe(String addr) {
-		return this.DedicatedHostIP == addr;
+		//System.out.println("("+addr+")? Sou "+this.DedicatedHostIP);
+		return this.DedicatedHostIP.contentEquals(addr);
 	}
 	
 	public void conectaSocket(Socket S) throws UnsupportedEncodingException, IOException {
 		this.conexao = S;
-		this.DedicatedHostIP = SocketsController.GetSocketIP(S);
+		this.DedicatedHostIP = SocketsServer.GetSocketIP(S);
 		this.entrada = new BufferedReader( new InputStreamReader(S.getInputStream(), "Cp1252") );
 		this.saida = new DataOutputStream(S.getOutputStream());
 	}
@@ -56,10 +56,32 @@ public class EmBDdedSocket implements Runnable {
 	
 	public void release() {
 		try {
-			this.conexao.close();
+			if(!this.conexao.isClosed()) this.conexao.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}		
+	}
+	
+	private EmBDdedMessage extraiProximaMensagem(String novaEntrada) {
+		// Concatena buffer e entrada
+		String entradaMsgTotal = this.bytesResto+novaEntrada;
+		
+		// Busca ENDL
+		int endl = entradaMsgTotal.indexOf( EmBDdedMessage.MESSAGE_ENDL );
+
+		// Sem endl, espera próxima iteração
+		if(endl == -1) {
+			System.out.println("Incompleto: "+entradaMsgTotal);
+			this.bytesResto = entradaMsgTotal;
+			return null;
+		}
+		
+		String toProcess = entradaMsgTotal.substring(0, endl);
+		
+		this.bytesResto = entradaMsgTotal.substring(endl+1, entradaMsgTotal.length());
+		
+		// Retorna mensagem processada em LOW-LEVEL
+		return new EmBDdedMessage(toProcess);
 	}
 	
 	@Override
@@ -74,30 +96,14 @@ public class EmBDdedSocket implements Runnable {
 				while ( ((tam = this.entrada.read(reader)) > 0) // Dados lidos ou linhas a processar:
 						|| (this.bytesResto.indexOf( EmBDdedMessage.MESSAGE_ENDL ) > 0) ) {
 					
-					String a ="";	
-					if(tam > 0) a = String.copyValueOf(reader, 0, tam);
+					String newInput ="";	
+					if(tam > 0) newInput = String.copyValueOf(reader, 0, tam);
 
-					// Concatena buffer e entrada
-					String entradaMsgTotal = this.bytesResto+a;
-					System.out.println("Processar> "+entradaMsgTotal);
-					
-					// Busca ENDL
-					int endl = entradaMsgTotal.indexOf( EmBDdedMessage.MESSAGE_ENDL );
-	
-					// Sem endl, espera próxima iteração
-					if(endl == -1) {
-						System.out.println("Incompleto: "+a);
-						this.bytesResto = entradaMsgTotal;
-						continue;
+					EmBDdedMessage messg;
+					if((messg = extraiProximaMensagem(newInput)) != null) {
+						// Cliente interpreta em HIGH-LEVEL
+						this.cliente.newMessage(messg);
 					}
-					
-					String toProcess = entradaMsgTotal.substring(0, endl);
-					
-					this.bytesResto = entradaMsgTotal.substring(endl+1, entradaMsgTotal.length());
-
-					EmBDdedMessage msg = new EmBDdedMessage(toProcess);
-					this.cliente.newMessage(msg);
-					
 					
 				}
 				

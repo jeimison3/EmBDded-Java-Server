@@ -1,0 +1,69 @@
+package remote;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.sql.Connection;
+import java.util.ArrayList;
+
+class SocketsServerListener implements Runnable {
+	private ServerSocket servidor;
+	private Connection database;
+	
+	private ArrayList<EmBDdedClientKeeper> clientes = new ArrayList<EmBDdedClientKeeper>();
+	
+	public SocketsServerListener(ServerSocket servidor, Connection db) throws SocketException {
+		this.database = db;
+		this.servidor = servidor;
+		this.servidor.setSoTimeout(0); // Sem timeout
+	}
+	
+	public int getThreadClientId(String addr) {
+		int ret = -1;
+		for(int i=0; i < this.clientes.size(); i++) 
+			if( this.clientes.get(i).itsMe(addr) ) {
+				ret = i;
+				break;
+			}
+		return ret;
+	}
+	
+	public boolean finalizaCliente(Socket s) {
+		int idx = getThreadClientId( SocketsServer.GetSocketIP(s) );
+		if(idx == -1) return false;
+		
+		this.clientes.remove(idx);
+		return true;
+		
+	}
+	
+	@Override
+	public void run() {
+		while(true) {
+			try {
+				Socket client = this.servidor.accept();
+				// Pra cada nova conexão, direciona a uma thread
+				
+				int idxCli = getThreadClientId(SocketsServer.GetSocketIP(client));
+				if(idxCli == -1) { // Nova conexão
+					System.out.println("Listener> Nova conexão.");
+					EmBDdedClientKeeper threadSkt = new EmBDdedClientKeeper(client, this.database);
+					new Thread(threadSkt).start();
+					this.clientes.add(threadSkt);
+				} else { // Reconexão
+					System.out.println("Listener> Reconexão.");
+					this.clientes.get(idxCli).conectaSocket(client);
+				}
+				System.out.println("Listener> Threads: "+this.clientes.size());
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+				e.getSuppressed();
+			}
+		}
+	}
+	
+}
+
+

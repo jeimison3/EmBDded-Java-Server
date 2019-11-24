@@ -1,7 +1,7 @@
 package init;
 
 import DB.DBConnection;
-import remote.SocketsController;
+import remote.SocketsServer;
 
 public class Main {
 	
@@ -10,7 +10,7 @@ public class Main {
 	public static void main(String[] args) {
 		
 		System.out.print("Iniciando socket...");
-		SocketsController controlador = new SocketsController(porta);
+		SocketsServer controlador = new SocketsServer(porta);
 		if(controlador.iniciar()) System.out.println("OK");
 		else System.out.println("FALHA");
 		
