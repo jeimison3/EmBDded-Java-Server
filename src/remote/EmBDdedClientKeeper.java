@@ -1,15 +1,9 @@
 package remote;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.sql.Connection;
@@ -30,12 +24,11 @@ public class EmBDdedClientKeeper implements Runnable {
 	
 	public EmBDdedClientKeeper(Socket connection, Connection db) throws IOException {
 		this.db = db;
-		this.cliente = new EmBDdedClient(connection, this);
+		this.cliente = new EmBDdedClient(connection, this, db);
 		this.conectaSocket(connection);
 	}
 	
 	public boolean itsMe(String addr) {
-		//System.out.println("("+addr+")? Sou "+this.DedicatedHostIP);
 		return this.DedicatedHostIP.contentEquals(addr);
 	}
 	

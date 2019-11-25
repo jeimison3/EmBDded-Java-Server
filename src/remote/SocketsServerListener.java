@@ -14,6 +14,7 @@ class SocketsServerListener implements Runnable {
 	private ArrayList<EmBDdedClientKeeper> clientes = new ArrayList<EmBDdedClientKeeper>();
 	
 	public SocketsServerListener(ServerSocket servidor, Connection db) throws SocketException {
+		if(db == null) System.out.println("NULO??");
 		this.database = db;
 		this.servidor = servidor;
 		this.servidor.setSoTimeout(0); // Sem timeout
@@ -43,7 +44,7 @@ class SocketsServerListener implements Runnable {
 		while(true) {
 			try {
 				Socket client = this.servidor.accept();
-				// Pra cada nova conexão, direciona a uma thread
+				// Pra cada conexão, direciona a uma [nova] thread
 				
 				int idxCli = getThreadClientId(SocketsServer.GetSocketIP(client));
 				if(idxCli == -1) { // Nova conexão

@@ -14,17 +14,15 @@ public class SocketsServer {
 	public ServerSocket servidor;
 	private Connection mysql = null;
 	
-	public SocketsServer(int port) {
+	public SocketsServer(int port, Connection db) {
 		this.porta = port;
+		this.mysql = db;
 	}
 	
 	public static String GetSocketIP(Socket s) {
 		return ((InetSocketAddress)s.getRemoteSocketAddress() ).getAddress().toString().split("/")[1];
 	}
 	
-	public void setDatabase(Connection db) {
-		this.mysql = db;
-	}
 	
 	public boolean iniciar() {
 		try {
