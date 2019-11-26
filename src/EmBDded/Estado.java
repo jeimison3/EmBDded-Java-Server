@@ -5,36 +5,22 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import remote.EmBDdedClientKeeper;
+
 public class Estado extends Atributo {
 	public String valor;
 	public boolean exportar;
 	private Connection db;
+	private EmBDdedClientKeeper thread;
 	
-	public Estado(Connection db, Atributo atr, String valor) {
+	public Estado(Connection db, EmBDdedClientKeeper thread, Atributo atr) {
 		super(atr.atribid, atr.nome, atr.tipo);
-		this.getDirection();
-		this.db = db;
-		this.setValor(valor);
-	}
-	
-	public Estado(Connection db, Atributo atr) {
-		super(atr.atribid, atr.nome, atr.tipo);
+		this.thread = thread;
 		this.db = db;
 		this.getDirection();
 		this.valor = this.getDBValor();
 	}
 	
-	public Estado(Connection db, String nome, String tipo, String valor) {
-		super(nome, tipo);
-		this.db = db;
-		this.setValor(valor);	
-	}
-	
-	public Estado(Connection db, int id, String nome, String tipo, String valor) {
-		super(id, nome, tipo);
-		this.db = db;
-		this.setValor(valor);
-	}
 
 	public String getValor() {
 		return valor;
@@ -54,7 +40,7 @@ public class Estado extends Atributo {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return "";
 	}
 	
 	private boolean getDirection() {
@@ -109,6 +95,11 @@ public class Estado extends Atributo {
 		}
 		return false;
 		
+	}
+	
+	public void preformEnvioEstadoToCliente() {
+		this.thread.sendMessage(this.toString());
+		//this.thread.forcaInterpretaMsg(msg);
 	}
 	
 	@Override

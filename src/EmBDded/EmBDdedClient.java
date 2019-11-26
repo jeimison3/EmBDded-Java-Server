@@ -17,9 +17,10 @@ public class EmBDdedClient {
 	public EmBDdedClient(EmBDdedClientKeeper runnable, Connection db) {
 		this.thread = runnable;
 		this.db = db;
-		this.cliente = new Cliente(this.db);
+		this.cliente = new Cliente(this.db, this.thread);
 	}
 	
+		
 	
 	
 	void addAtributo(String nome, String tipo, boolean exportarDIRECAO) {

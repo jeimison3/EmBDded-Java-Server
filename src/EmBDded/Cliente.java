@@ -7,14 +7,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import remote.EmBDdedClientKeeper;
+
 public class Cliente {
 	private int clientid = -1;
 	private String clientname = "";
 	private Connection db;
 	private ArrayList<Estado> estados = new ArrayList<Estado>();
 	private ArrayList<Atributo> atributos = new ArrayList<Atributo>();
+	private EmBDdedClientKeeper thread;
 	
-	public Cliente(Connection db) {
+	public Cliente(Connection db, EmBDdedClientKeeper thread) {
+		this.thread = thread;
 		this.db = db;
 	}
 	
@@ -52,7 +56,11 @@ public class Cliente {
 		for(Estado e : this.estados) {
 			if(e.nome.contentEquals(nome)) return e;
 		}
-		return new Estado( this.db, this.getAtributo(nome) );
+		Atributo a = this.getAtributo(nome);
+		if(a != null) {
+			return new Estado( this.db, this.thread, a );
+		}
+		return null;
 	}
 	
 	public Atributo getAtributo(String nome) {
@@ -63,12 +71,9 @@ public class Cliente {
 		return null;
 	}
 	
-	public void addEstado(Atributo atr, String valor) {
-		estados.add(new Estado(this.db, atr, valor));
-	}
 	
 	public void addEstadoExportar(Atributo atr) {
-		Estado e = new Estado(this.db, atr, "");
+		Estado e = new Estado(this.db, this.thread, atr);
 		e.setExport(true);
 		estados.add(e);
 	}
@@ -154,7 +159,7 @@ public class Cliente {
 			this.estados.clear();
 			
 			for(Atributo a : this.atributos) {
-				this.estados.add( new Estado(this.db, a) );
+				this.estados.add( new Estado(this.db, this.thread, a) );
 			}
 			/*
 			query = "";

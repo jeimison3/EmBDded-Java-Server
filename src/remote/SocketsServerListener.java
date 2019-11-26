@@ -30,6 +30,14 @@ class SocketsServerListener implements Runnable {
 		return ret;
 	}
 	
+	public EmBDdedClientKeeper getClientByName(String clientname) {
+		for(EmBDdedClientKeeper k : this.clientes) 
+			if( k.getClientName().contentEquals(clientname) ) {
+				return k;
+			}
+		return null;
+	}
+	
 	public boolean finalizaCliente(Socket s) {
 		int idx = getThreadClientId( SocketsServer.GetSocketIP(s) );
 		if(idx == -1) return false;
@@ -49,7 +57,7 @@ class SocketsServerListener implements Runnable {
 				int idxCli = getThreadClientId(SocketsServer.GetSocketIP(client));
 				if(idxCli == -1) { // Nova conexão
 					System.out.println("Listener> Nova conexão.");
-					EmBDdedClientKeeper threadSkt = new EmBDdedClientKeeper(client, this.database);
+					EmBDdedClientKeeper threadSkt = new EmBDdedClientKeeper(client, this.database, this);
 					new Thread(threadSkt).start();
 					this.clientes.add(threadSkt);
 				} else { // Reconexão

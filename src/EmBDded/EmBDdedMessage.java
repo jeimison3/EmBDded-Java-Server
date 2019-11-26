@@ -16,6 +16,9 @@ public class EmBDdedMessage {
 	public static final char MESSAGE_CLIENT_SET_EXPORT = (char) 8; // Ordem de exportar INPUT para Atributo
 	public static final char MESSAGE_CLIENT_PUB_ESTADO = (char) 9; // Publicação de Estado
 	
+	public static final char MESSAGE_SERVER_SET_ESTADO = (char) 20; // DEFINIÇÃO de Estado
+	
+	
 	
 	public static final char MESSAGE_CONNECTION_CLOSE = (char) 255; // Finaliza socket no server-side
 	
@@ -67,14 +70,15 @@ public class EmBDdedMessage {
 			this.dataStr1=this.entrada.substring(1);
 			break;
 			
-		case EmBDdedMessage.MESSAGE_CLIENT_PUB_ESTADO:
+		case EmBDdedMessage.MESSAGE_CLIENT_PUB_ESTADO:{
 			this.MessageType = EmBDdedMessage.MESSAGE_CLIENT_PUB_ESTADO;
 			int nxP = this.entrada.indexOf(EmBDdedMessage.MESSAGE_NEXTPARAM);
 			this.dataStr1=this.entrada.substring(1, nxP);
 			this.dataStr2=this.entrada.substring(nxP+1);
 			System.out.println(this.dataStr1+" tem valor: "+this.dataStr2);
-			break;
-			
+			break;	
+		}
+		
 		case EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ATRIBUTO:
 			this.MessageType = EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ATRIBUTO;
 			String typAtrib = "";
@@ -94,6 +98,17 @@ public class EmBDdedMessage {
 		case EmBDdedMessage.MESSAGE_CONNECTION_CLOSE:
 			this.MessageType = EmBDdedMessage.MESSAGE_CONNECTION_CLOSE;
 			break;
+			
+		case EmBDdedMessage.MESSAGE_SERVER_SET_ESTADO:{
+			this.MessageType = EmBDdedMessage.MESSAGE_SERVER_SET_ESTADO;
+			int nxP = this.entrada.indexOf(EmBDdedMessage.MESSAGE_NEXTPARAM);
+			int nxP2 = this.entrada.indexOf(EmBDdedMessage.MESSAGE_NEXTPARAM, nxP+1);
+			this.dataBool1 = (this.entrada.charAt(1) == (char) 2); // EXPORT
+			this.dataStr1=this.entrada.substring(2, nxP);
+			this.dataStr2=this.entrada.substring(nxP+1, nxP2);
+			this.dataStr3=this.entrada.substring(nxP2+1);
+			break;
+		}
 			
 		default:
 			System.out.println("Mensagem inesperada: "+((int)headerOp)+".");

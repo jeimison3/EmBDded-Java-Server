@@ -10,22 +10,29 @@ import java.sql.Connection;
 
 import EmBDded.EmBDdedClient;
 import EmBDded.EmBDdedMessage;
+import EmBDded.Estado;
 
 // Classe individual de cada conexão socket
 
 public class EmBDdedClientKeeper implements Runnable {
 	private String DedicatedHostIP;
 	private EmBDdedClient cliente;
+	private SocketsServerListener listener;
 	public Socket conexao;
 	private Connection db;
 	public DataOutputStream saida;
 	public BufferedReader entrada;
 	private String bytesResto = "";
 	
-	public EmBDdedClientKeeper(Socket connection, Connection db) throws IOException {
+	public EmBDdedClientKeeper(Socket connection, Connection db, SocketsServerListener listener) throws IOException {
 		this.db = db;
+		this.listener = listener;
 		this.conectaSocket(connection);
 		this.cliente = new EmBDdedClient(this, db);
+	}
+	
+	public String getClientName() {
+		return this.cliente.cliente.getClientname();
 	}
 	
 	public boolean itsMe(String addr) {
@@ -41,6 +48,14 @@ public class EmBDdedClientKeeper implements Runnable {
 	
 	public void forceUpdateEstados() {
 		cliente.forceRecvSelfEstado();
+	}
+	
+	public void forcaInterpretaMsg(EmBDdedMessage msg) {
+		try {
+			this.cliente.newMessage(msg);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void sendMessage(String msg) {
@@ -72,6 +87,7 @@ public class EmBDdedClientKeeper implements Runnable {
 		
 		String toProcess = this.bytesResto.substring(0, endl);
 		
+		
 		this.bytesResto = this.bytesResto.substring(endl+1, this.bytesResto.length());
 		
 		// Retorna mensagem processada em LOW-LEVEL
@@ -97,10 +113,40 @@ public class EmBDdedClientKeeper implements Runnable {
 					// Concatena buffer e entrada
 					this.bytesResto += newInput;
 					
+					
 					while((messg = extraiProximaMensagem()) != null) {
 						
-						// Cliente interpreta em HIGH-LEVEL
-						this.cliente.newMessage(messg);
+						switch(messg.getType()) {
+						case EmBDdedMessage.MESSAGE_SERVER_SET_ESTADO:{
+							EmBDdedClientKeeper k = this.listener.getClientByName(messg.dataStr1);
+							
+							Estado e = null;
+							if(k != null) {
+								e = k.cliente.cliente.getEstado(messg.dataStr2);
+							}
+							if(e == null) {
+								System.out.println("ERR: Cliente desconectado ou atributo desconhecido.");
+								continue;
+							}
+							System.out.println("TOOL> Ordem para "+k.getClientName() + " | "+(messg.dataBool1?"IN":"OUT")+" | "+e.nome+"="+messg.dataStr3);
+							if(!messg.dataBool1) { // SAIDA
+								e.setExport(false);
+								e.setValor(messg.dataStr3);
+								e.preformEnvioEstadoToCliente();
+							} else { // Entrada / EXPORTAR
+								e.setExport(true);
+								e.preformEnvioEstadoToCliente();
+							}
+							
+							break;
+						}
+						default:
+							// Cliente interpreta em HIGH-LEVEL
+							this.cliente.newMessage(messg);
+							break;
+						}
+						
+						
 						
 					}
 					
