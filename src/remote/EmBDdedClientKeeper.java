@@ -24,8 +24,8 @@ public class EmBDdedClientKeeper implements Runnable {
 	
 	public EmBDdedClientKeeper(Socket connection, Connection db) throws IOException {
 		this.db = db;
-		this.cliente = new EmBDdedClient(connection, this, db);
 		this.conectaSocket(connection);
+		this.cliente = new EmBDdedClient(this, db);
 	}
 	
 	public boolean itsMe(String addr) {
@@ -39,9 +39,13 @@ public class EmBDdedClientKeeper implements Runnable {
 		this.saida = new DataOutputStream(S.getOutputStream());
 	}
 	
+	public void forceUpdateEstados() {
+		cliente.forceRecvSelfEstado();
+	}
+	
 	public void sendMessage(String msg) {
 		try {
-			this.saida.write( msg.getBytes("Cp1252") );
+			this.saida.write( msg.concat(String.valueOf(EmBDdedMessage.MESSAGE_ENDL)).getBytes("Cp1252") );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -55,23 +59,20 @@ public class EmBDdedClientKeeper implements Runnable {
 		}		
 	}
 	
-	private EmBDdedMessage extraiProximaMensagem(String novaEntrada) {
-		// Concatena buffer e entrada
-		String entradaMsgTotal = this.bytesResto+novaEntrada;
+	private EmBDdedMessage extraiProximaMensagem() {
 		
 		// Busca ENDL
-		int endl = entradaMsgTotal.indexOf( EmBDdedMessage.MESSAGE_ENDL );
+		int endl = this.bytesResto.indexOf( EmBDdedMessage.MESSAGE_ENDL );
 
 		// Sem endl, espera próxima iteração
 		if(endl == -1) {
-			System.out.println("Incompleto: "+entradaMsgTotal);
-			this.bytesResto = entradaMsgTotal;
+			//System.out.println("Incompleto: "+this.bytesResto);
 			return null;
 		}
 		
-		String toProcess = entradaMsgTotal.substring(0, endl);
+		String toProcess = this.bytesResto.substring(0, endl);
 		
-		this.bytesResto = entradaMsgTotal.substring(endl+1, entradaMsgTotal.length());
+		this.bytesResto = this.bytesResto.substring(endl+1, this.bytesResto.length());
 		
 		// Retorna mensagem processada em LOW-LEVEL
 		return new EmBDdedMessage(toProcess);
@@ -83,7 +84,6 @@ public class EmBDdedClientKeeper implements Runnable {
 		while(true) {
 			// Aguarda enquanto socket desconectado.
 			if(this.conexao.isClosed() || !this.conexao.isConnected()) continue;
-			
 			try {
 			int tam = 0;
 				while ( ((tam = this.entrada.read(reader)) > 0) // Dados lidos ou linhas a processar:
@@ -93,10 +93,17 @@ public class EmBDdedClientKeeper implements Runnable {
 					if(tam > 0) newInput = String.copyValueOf(reader, 0, tam);
 
 					EmBDdedMessage messg;
-					if((messg = extraiProximaMensagem(newInput)) != null) {
+					
+					// Concatena buffer e entrada
+					this.bytesResto += newInput;
+					
+					while((messg = extraiProximaMensagem()) != null) {
+						
 						// Cliente interpreta em HIGH-LEVEL
 						this.cliente.newMessage(messg);
+						
 					}
+					
 					
 				}
 				

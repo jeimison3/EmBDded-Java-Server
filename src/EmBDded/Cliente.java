@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 public class Cliente {
@@ -27,7 +28,7 @@ public class Cliente {
 		return false;
 	}
 	
-	public boolean addAtributo(String nome, String tipo) {
+	public Atributo addAtributo(String nome, String tipo) {
 		try {
 			System.out.println("FK> "+this.clientid);
 			String query = "INSERT INTO atributos(atribid,clientid,nome,tipo) VALUES(NULL, ?, ?, ?)";
@@ -37,17 +38,39 @@ public class Cliente {
 			ps.setString(3, tipo);
 			int ret = ps.executeUpdate();
 			if(ret > 0) {
-				atributos.add(new Atributo(nome, tipo));
-				return true;
+				Atributo a = new Atributo(nome, tipo);
+				atributos.add(a);
+				return a;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}		
-		return false;
+		return null;
+	}
+	
+	public Estado getEstado(String nome) {
+		for(Estado e : this.estados) {
+			if(e.nome.contentEquals(nome)) return e;
+		}
+		return new Estado( this.db, this.getAtributo(nome) );
+	}
+	
+	public Atributo getAtributo(String nome) {
+		for(Atributo e : this.atributos) {
+			//System.out.println(e.nome + " == "+ nome + "?");
+			if(e.nome.contentEquals(nome)) return e;
+		}
+		return null;
 	}
 	
 	public void addEstado(Atributo atr, String valor) {
 		estados.add(new Estado(this.db, atr, valor));
+	}
+	
+	public void addEstadoExportar(Atributo atr) {
+		Estado e = new Estado(this.db, atr, "");
+		e.setExport(true);
+		estados.add(e);
 	}
 
 
@@ -63,18 +86,30 @@ public class Cliente {
 	public boolean registraCliente() {
 		try {
 			String query = "INSERT INTO clientes(clientid, clientname) VALUES(NULL, ?);";
-			PreparedStatement ps = this.db.prepareStatement(query);
+			PreparedStatement ps = this.db.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, this.clientname);
 			int ret = ps.executeUpdate();
+			ResultSet kys = ps.getGeneratedKeys();
 			if(ret > 0) {
-				this.clientid = ps.getGeneratedKeys().getInt("clientid");
+				kys.next();
+				this.clientid =  kys.getInt(1);
 				System.out.println("NewCli ID: "+this.clientid);
+				kys.close();
+				ps.close();
 				return true;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return false;
+	}
+	
+	public ArrayList<String> EstadosToString(){
+		ArrayList<String> str = new ArrayList<String>();
+		for(Estado e : this.estados) {
+			str.add(e.toString());
+		}
+		return str;
 	}
 
 
@@ -90,14 +125,16 @@ public class Cliente {
 			ps.setString(1, this.clientname);
 			
 			ResultSet rs = ps.executeQuery();
-			int resu = rs.getFetchSize();
 			
-			if( resu == 0 ) { ps.close(); return this.registraCliente(); }
-			else if(resu > 1) { System.out.println("Problema no banco: Múltiplos nomes iguais."); }
-				
-			while(rs.next()) {
+			if(rs.next()) {
 				this.clientid = rs.getInt("clientid");
+			} else { 
+				ps.close();
+				return this.registraCliente();
 			}
+
+				
+			
 			
 			// ===================================================
 			
@@ -112,10 +149,14 @@ public class Cliente {
 				this.atributos.add(new Atributo(rs.getInt("atribid"), rs.getString("nome"), rs.getString("tipo")));
 			}
 			
+			ps.close();
 			// ===================================================
-			
 			this.estados.clear();
 			
+			for(Atributo a : this.atributos) {
+				this.estados.add( new Estado(this.db, a) );
+			}
+			/*
 			query = "";
 			for(int i = 0; i < this.atributos.size(); i++) {
 				query+= this.atributos.get(i).atribid+(i<this.atributos.size()-2 ? "," : "" );
@@ -130,11 +171,11 @@ public class Cliente {
 					if(a.atribid == rs.getInt("atribid"))
 						estados.add(new Estado(this.db, a, rs.getString("valor")));
 				}
-			}
+			}*/
 			
 			// ===================================================
 			
-			ps.close();
+			//ps.close();
 			
 			System.out.printf("id: %d | %d atributos | %d estados\n", this.clientid, this.atributos.size(), this.estados.size());
 			

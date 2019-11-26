@@ -5,15 +5,24 @@ package EmBDded;
 
 public class EmBDdedMessage {
 	
-	public static final char MESSAGE_UNKNOWN = (char) 0;
+	public static final char MESSAGE_UNKNOWN = (char) 0; // Mensagem desconhecida
 	
-	public static final char MESSAGE_CLIENT_NAME = (char) 1;
+	public static final char MESSAGE_CLIENT_NAME = (char) 1; // Autenticação com nome de cliente
 	
-	public static final char MESSAGE_CLIENT_PUB_NEW_ESTADO = (char) 6;
+	public static final char MESSAGE_CLIENT_RECV_SELF_ESTADO = (char) 5; // Solicitação de Estado R:[7]
+	public static final char MESSAGE_CLIENT_PUB_NEW_ATRIBUTO = (char) 6; // Publicação de Atributo
 	
-	public static final char MESSAGE_CONNECTION_CLOSE = (char) 255;
+	public static final char MESSAGE_CLIENT_SET_ESTADO = (char) 7; // Ordem de valor para Estado
+	public static final char MESSAGE_CLIENT_SET_EXPORT = (char) 8; // Ordem de exportar INPUT para Atributo
+	public static final char MESSAGE_CLIENT_PUB_ESTADO = (char) 9; // Publicação de Estado
 	
-	public static final char MESSAGE_ENDL = (char) 13;
+	
+	public static final char MESSAGE_CONNECTION_CLOSE = (char) 255; // Finaliza socket no server-side
+	
+	public static final char MESSAGE_ENDL = (char) 13; // Fim de mensagem
+	public static final char MESSAGE_NEXTPARAM = (char) 14; // Pŕoximo parâmetro
+	
+	public static final char MESSAGE_RESPONSE_ERROR = (char) 16; // Erro na resposta
 	
 	
 	private char MessageType;
@@ -53,9 +62,21 @@ public class EmBDdedMessage {
 			this.dataStr1 = this.entrada.substring(1);
 			break;
 			
-		case EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ESTADO:
-			this.MessageType = EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ESTADO;
-			this.dataStr1=this.entrada.substring(2);
+		case EmBDdedMessage.MESSAGE_CLIENT_RECV_SELF_ESTADO:
+			this.MessageType = EmBDdedMessage.MESSAGE_CLIENT_RECV_SELF_ESTADO;
+			this.dataStr1=this.entrada.substring(1);
+			break;
+			
+		case EmBDdedMessage.MESSAGE_CLIENT_PUB_ESTADO:
+			this.MessageType = EmBDdedMessage.MESSAGE_CLIENT_PUB_ESTADO;
+			int nxP = this.entrada.indexOf(EmBDdedMessage.MESSAGE_NEXTPARAM);
+			this.dataStr1=this.entrada.substring(1, nxP);
+			this.dataStr2=this.entrada.substring(nxP+1);
+			System.out.println(this.dataStr1+" tem valor: "+this.dataStr2);
+			break;
+			
+		case EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ATRIBUTO:
+			this.MessageType = EmBDdedMessage.MESSAGE_CLIENT_PUB_NEW_ATRIBUTO;
 			String typAtrib = "";
 			switch(this.entrada.charAt(1)) {
 				case 1: typAtrib = "BOOL"; break;
@@ -65,6 +86,9 @@ public class EmBDdedMessage {
 	            default: typAtrib = "VOID";
 			}
 			this.dataStr2=typAtrib;
+			this.dataBool1 = (this.entrada.charAt(2) == (char) 2); // EXPORT
+			this.dataStr1=this.entrada.substring(3);
+			
 			break;
 			
 		case EmBDdedMessage.MESSAGE_CONNECTION_CLOSE:

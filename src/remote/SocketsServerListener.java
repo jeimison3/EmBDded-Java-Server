@@ -55,6 +55,7 @@ class SocketsServerListener implements Runnable {
 				} else { // Reconexão
 					System.out.println("Listener> Reconexão.");
 					this.clientes.get(idxCli).conectaSocket(client);
+					//this.clientes.get(idxCli).forceUpdateEstados();
 				}
 				System.out.println("Listener> Threads: "+this.clientes.size());
 				

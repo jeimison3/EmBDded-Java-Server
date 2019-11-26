@@ -16,4 +16,14 @@ public class Atributo {
 		this.nome = nome;
 		this.tipo = tipo;
 	}
+	
+	public char getTipo() {
+		switch(this.tipo) {
+			case "BOOL": return 1;
+	        case "INT": return 2;
+	        case "STR": return 3;
+	        case "FLOAT": return 4;
+	        default: return 5;
+		}
+	}
 }
