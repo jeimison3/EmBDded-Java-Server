@@ -1,4 +1,4 @@
-package EmBDded;
+package DAO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,23 +7,32 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import Classes.Atributo;
+import Classes.Cliente;
+import Classes.Estado;
 import remote.EmBDdedClientKeeper;
 
-public class Cliente {
-	private int clientid = -1;
-	private String clientname = "";
+public class ClienteDAO extends Cliente {
+	
+
 	private Connection db;
-	private ArrayList<Estado> estados = new ArrayList<Estado>();
+	private ArrayList<EstadoDAO> estados = new ArrayList<EstadoDAO>();
 	private ArrayList<Atributo> atributos = new ArrayList<Atributo>();
 	private EmBDdedClientKeeper thread;
 	
-	public Cliente(Connection db, EmBDdedClientKeeper thread) {
+	public ClienteDAO(Connection db, EmBDdedClientKeeper thread) {
 		this.thread = thread;
 		this.db = db;
 	}
 	
-	public String getClientname() {
-		return clientname;
+	@Override
+	public void setClientname(String clientname) {
+		this.clientname = clientname;
+		try {
+			this.retriveMainData();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean haAtributo(String nome) {
@@ -34,7 +43,7 @@ public class Cliente {
 	
 	public Atributo addAtributo(String nome, String tipo) {
 		try {
-			System.out.println("FK> "+this.clientid);
+			//System.out.println("FK> "+this.clientid);
 			String query = "INSERT INTO atributos(atribid,clientid,nome,tipo) VALUES(NULL, ?, ?, ?)";
 			PreparedStatement ps = this.db.prepareStatement(query);
 			ps.setInt(1, this.clientid);
@@ -52,13 +61,13 @@ public class Cliente {
 		return null;
 	}
 	
-	public Estado getEstado(String nome) {
-		for(Estado e : this.estados) {
+	public EstadoDAO getEstado(String nome) {
+		for(EstadoDAO e : this.estados) {
 			if(e.nome.contentEquals(nome)) return e;
 		}
 		Atributo a = this.getAtributo(nome);
 		if(a != null) {
-			return new Estado( this.db, this.thread, a );
+			return new EstadoDAO( this.db, this.thread, a );
 		}
 		return null;
 	}
@@ -73,19 +82,9 @@ public class Cliente {
 	
 	
 	public void addEstadoExportar(Atributo atr) {
-		Estado e = new Estado(this.db, this.thread, atr);
+		EstadoDAO e = new EstadoDAO(this.db, this.thread, atr);
 		e.setExport(true);
 		estados.add(e);
-	}
-
-
-	public void setClientname(String clientname) {
-		this.clientname = clientname;
-		try {
-			this.retriveMainData();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public boolean registraCliente() {
@@ -111,7 +110,7 @@ public class Cliente {
 	
 	public ArrayList<String> EstadosToString(){
 		ArrayList<String> str = new ArrayList<String>();
-		for(Estado e : this.estados) {
+		for(EstadoDAO e : this.estados) {
 			str.add(e.toString());
 		}
 		return str;
@@ -159,28 +158,9 @@ public class Cliente {
 			this.estados.clear();
 			
 			for(Atributo a : this.atributos) {
-				this.estados.add( new Estado(this.db, this.thread, a) );
-			}
-			/*
-			query = "";
-			for(int i = 0; i < this.atributos.size(); i++) {
-				query+= this.atributos.get(i).atribid+(i<this.atributos.size()-2 ? "," : "" );
+				this.estados.add( new EstadoDAO(this.db, this.thread, a) );
 			}
 			
-			query = "SELECT atribid,valor FROM estados WHERE atribid IN ( "+query+" );";
-			ps = this.db.prepareStatement(query);
-			
-			rs = ps.executeQuery();
-			while(rs.next()) {
-				for(Atributo a : this.atributos) {
-					if(a.atribid == rs.getInt("atribid"))
-						estados.add(new Estado(this.db, a, rs.getString("valor")));
-				}
-			}*/
-			
-			// ===================================================
-			
-			//ps.close();
 			
 			System.out.printf("id: %d | %d atributos | %d estados\n", this.clientid, this.atributos.size(), this.estados.size());
 			
@@ -188,7 +168,5 @@ public class Cliente {
 		}
 		return false;
 	}
-	
-}
 
-	
+}

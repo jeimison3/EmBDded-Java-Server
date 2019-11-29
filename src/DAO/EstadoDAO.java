@@ -1,29 +1,25 @@
-package EmBDded;
+package DAO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import Classes.Atributo;
+import Classes.Estado;
+import EmBDded.EmBDdedMessage;
 import remote.EmBDdedClientKeeper;
 
-public class Estado extends Atributo {
-	public String valor;
-	public boolean exportar;
+public class EstadoDAO extends Estado {
 	private Connection db;
 	private EmBDdedClientKeeper thread;
 	
-	public Estado(Connection db, EmBDdedClientKeeper thread, Atributo atr) {
-		super(atr.atribid, atr.nome, atr.tipo);
+	public EstadoDAO(Connection db, EmBDdedClientKeeper thread, Atributo atr) {
+		super(atr);
 		this.thread = thread;
 		this.db = db;
 		this.getDirection();
 		this.valor = this.getDBValor();
-	}
-	
-
-	public String getValor() {
-		return valor;
 	}
 	
 	private String getDBValor() {
@@ -94,19 +90,12 @@ public class Estado extends Atributo {
 			e.printStackTrace();
 		}
 		return false;
-		
 	}
 	
 	public void preformEnvioEstadoToCliente() {
 		this.thread.sendMessage(this.toString());
-		//this.thread.forcaInterpretaMsg(msg);
 	}
 	
-	@Override
-	public String toString() {
-		String tmpValor = (this.valor == null ? String.valueOf(EmBDdedMessage.MESSAGE_RESPONSE_ERROR) : this.valor );
-		char clientNeedExport = (this.exportar ? (char) 2 : (char) 1 );
-		return String.format( "%c%c%c%s%c%s" , EmBDdedMessage.MESSAGE_CLIENT_SET_ESTADO, this.getTipo(), clientNeedExport, this.nome , EmBDdedMessage.MESSAGE_NEXTPARAM , tmpValor );
-	}
 	
+
 }

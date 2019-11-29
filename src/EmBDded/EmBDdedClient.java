@@ -6,18 +6,23 @@ import java.net.Socket;
 import java.sql.Connection;
 import java.util.ArrayList;
 
+import Classes.Atributo;
+import Classes.Cliente;
+import Classes.Estado;
+import DAO.ClienteDAO;
+import DAO.EstadoDAO;
 import remote.EmBDdedClientKeeper;
 
 public class EmBDdedClient {
 	private EmBDdedClientKeeper thread;
 	private Connection db;
-	public Cliente cliente = null;
+	public ClienteDAO cliente = null;
 	
 	
 	public EmBDdedClient(EmBDdedClientKeeper runnable, Connection db) {
 		this.thread = runnable;
 		this.db = db;
-		this.cliente = new Cliente(this.db, this.thread);
+		this.cliente = new ClienteDAO(this.db, this.thread);
 	}
 	
 		
@@ -43,7 +48,7 @@ public class EmBDdedClient {
 		
 		switch(msg.getType()) {
 		case EmBDdedMessage.MESSAGE_CLIENT_NAME:
-			System.out.println("Logado como: "+msg.dataStr1);
+			System.out.println("LOGIN> "+msg.dataStr1);
 			this.cliente.setClientname(msg.dataStr1);
 			break;
 			
@@ -54,7 +59,7 @@ public class EmBDdedClient {
 		}
 		
 		case EmBDdedMessage.MESSAGE_CLIENT_PUB_ESTADO:{
-			Estado e = this.cliente.getEstado(msg.dataStr1);
+			EstadoDAO e = this.cliente.getEstado(msg.dataStr1);
 			e.setValor(msg.dataStr2);
 			break;
 		}

@@ -8,9 +8,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.sql.Connection;
 
+import Classes.Estado;
+import DAO.EstadoDAO;
 import EmBDded.EmBDdedClient;
 import EmBDded.EmBDdedMessage;
-import EmBDded.Estado;
 
 // Classe individual de cada conexão socket
 
@@ -120,7 +121,7 @@ public class EmBDdedClientKeeper implements Runnable {
 						case EmBDdedMessage.MESSAGE_SERVER_SET_ESTADO:{
 							EmBDdedClientKeeper k = this.listener.getClientByName(messg.dataStr1);
 							
-							Estado e = null;
+							EstadoDAO e = null;
 							if(k != null) {
 								e = k.cliente.cliente.getEstado(messg.dataStr2);
 							}
@@ -128,7 +129,7 @@ public class EmBDdedClientKeeper implements Runnable {
 								System.out.println("ERR: Cliente desconectado ou atributo desconhecido.");
 								continue;
 							}
-							System.out.println("TOOL> Ordem para "+k.getClientName() + " | "+(messg.dataBool1?"IN":"OUT")+" | "+e.nome+"="+messg.dataStr3);
+							this.listener.addLog("TOOL> Ordem para "+k.getClientName() + " | "+(messg.dataBool1?"IN":"OUT")+" | "+e.nome+"="+messg.dataStr3);
 							if(!messg.dataBool1) { // SAIDA
 								e.setExport(false);
 								e.setValor(messg.dataStr3);

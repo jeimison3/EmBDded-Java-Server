@@ -1,4 +1,4 @@
-package EmBDded;
+package Classes;
 
 public class Atributo {
 	public int atribid;
